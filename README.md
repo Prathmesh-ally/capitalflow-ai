@@ -3,6 +3,9 @@
 **Deadline:** September 5, 2026
 **Stack:** MERN (MongoDB, Express, React, Node.js) + HTML/CSS/Bootstrap/JS
 
+![alt text](image.png)
+![alt text](image-1.png)
+
 ## 📖 Mission Statement
 CapitalFlow AI is an autonomous, AI-driven corporate treasury agent. It predicts upcoming cash flow shortages across multiple corporate bank accounts and automatically suggests or executes internal fund transfers to ensure liquidity and prevent overdrafts.
 
