@@ -13,6 +13,7 @@ CapitalFlow AI is an autonomous, AI-driven corporate treasury agent. It predicts
 4.  **Notification System:** Nodemailer integration via Ethereal Email for critical CFO alerts.
 5.  **Resiliency & Crisis Testing:** Includes a built-in 503 API fallback mechanism and an interactive "Simulate Cash Crash" demo mode to showcase real-time panic recovery.
 
+```mermaid
 sequenceDiagram
     participant U as CFO (Frontend UI)
     participant B as Express API (Backend)
@@ -34,9 +35,11 @@ sequenceDiagram
     B->>DB: 8. Deduct source, add to target, mark 'Executed'
     DB-->>B: Confirm balances updated
     B-->>U: 9. Refresh UI & Move to Audit Log
+```
 
 ## 🗄️ Database Schema & Relations
 
+```mermaid
 erDiagram
     ACCOUNT {
         ObjectId _id PK
@@ -71,6 +74,7 @@ erDiagram
     ACCOUNT ||--o{ PAYMENT : "funds (targetAccountId)"
     ACCOUNT ||--o{ ACTION : "source of funds (fromAccountId)"
     ACCOUNT ||--o{ ACTION : "destination of funds (toAccountId)"
+```
 
 ## 🚦 Micro-Phase Completion Tracker
 
