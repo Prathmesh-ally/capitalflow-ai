@@ -72,7 +72,7 @@ export default function Dashboard() {
   return (
     <div className="container pb-5">
       
-      {}
+      {/* Header Section */}
       <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
         <h3 className="fw-bold mb-0">Corporate Accounts Overview</h3>
         <div>
@@ -97,7 +97,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {}
+      {/* Account Cards */}
       <div className="row g-4 mb-5">
         {data.accounts.map((account) => (
           <div className="col-md-4" key={account._id}>
@@ -123,7 +123,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {}
+      {/* Main Content Split */}
       <div className="row g-4 mb-5">
         <div className="col-lg-5">
           <h4 className="fw-bold mb-3">Pending AI Actions</h4>
@@ -169,7 +169,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {}
+      {/* Audit Log */}
       <div className="row">
         <div className="col-12">
           <h4 className="fw-bold mb-3">🛡️ Immutable AI Execution Audit Log</h4>
@@ -194,31 +194,41 @@ export default function Dashboard() {
                         </td>
                       </tr>
                     ) : (
-                      data.auditLogs.map(log => (
-                        <tr key={log._id}>
-                          <td className="px-3 text-muted small">
-                            {new Date(log.executedAt).toLocaleString()}
-                          </td>
-                          <td className="fw-medium text-truncate" style={{ maxWidth: '250px' }}>
-                            {log.detectedIssue}
-                          </td>
-                          <td>
-                            <span className="badge bg-secondary me-1">
-                              {log.recommendedAction?.fromAccountId?.accountName || 'Source'}
-                            </span> 
-                            ⟶ 
-                            <span className="badge bg-primary ms-1">
-                              {log.recommendedAction?.toAccountId?.accountName || 'Target'}
-                            </span>
-                          </td>
-                          <td className="text-end px-3 fw-bold text-success">
-                            ₹{log.recommendedAction?.amountToTransfer?.toLocaleString()}
-                          </td>
-                          <td className="text-center">
-                            <span className="badge bg-success">Executed Successfully</span>
-                          </td>
-                        </tr>
-                      ))
+                      data.auditLogs.map(log => {
+                        // Map the fallback identity properly for the table
+                        const isExternal = log.recommendedAction?.fromAccountId === 'EXTERNAL_CREDIT';
+                        const fromName = isExternal 
+                          ? '🏦 External Credit Line' 
+                          : (log.recommendedAction?.fromAccountId?.accountName || 
+                             data.accounts.find(a => a._id === log.recommendedAction?.fromAccountId)?.accountName || 
+                             'Reserve Account');
+
+                        return (
+                          <tr key={log._id}>
+                            <td className="px-3 text-muted small">
+                              {new Date(log.executedAt).toLocaleString()}
+                            </td>
+                            <td className="fw-medium text-truncate" style={{ maxWidth: '250px' }}>
+                              {log.detectedIssue}
+                            </td>
+                            <td>
+                              <span className={`badge ${isExternal ? 'bg-danger' : 'bg-secondary'} me-1`}>
+                                {fromName}
+                              </span> 
+                              ⟶ 
+                              <span className="badge bg-primary ms-1">
+                                {log.recommendedAction?.toAccountId?.accountName || 'Target'}
+                              </span>
+                            </td>
+                            <td className="text-end px-3 fw-bold text-success">
+                              ₹{log.recommendedAction?.amountToTransfer?.toLocaleString()}
+                            </td>
+                            <td className="text-center">
+                              <span className="badge bg-success">Executed Successfully</span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>

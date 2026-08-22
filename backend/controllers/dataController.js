@@ -7,15 +7,13 @@ exports.getDashboardData = async (req, res) => {
     const accounts = await Account.find({});
     const upcomingPayments = await Payment.find({ status: 'Pending' }).sort({ dueDate: 1 }).populate('targetAccountId');
     
-    
+    // FIX: Removed .populate('recommendedAction.fromAccountId') to prevent the "EXTERNAL_CREDIT" crash
     const pendingActions = await Action.find({ status: 'Pending_Approval' })
-      .populate('recommendedAction.fromAccountId')
       .populate('recommendedAction.toAccountId');
 
-    
+    // FIX: Removed .populate('recommendedAction.fromAccountId') here as well
     const auditLogs = await Action.find({ status: 'Executed' })
       .sort({ executedAt: -1 })
-      .populate('recommendedAction.fromAccountId')
       .populate('recommendedAction.toAccountId');
 
     res.status(200).json({
@@ -37,7 +35,6 @@ exports.approveAction = async (req, res) => {
   try {
     const { actionId } = req.params;
 
-    
     const action = await Action.findById(actionId);
     if (!action || action.status !== 'Pending_Approval') {
       return res.status(404).json({ success: false, message: 'Action not found or already processed' });
@@ -45,25 +42,34 @@ exports.approveAction = async (req, res) => {
 
     const { fromAccountId, toAccountId, amountToTransfer } = action.recommendedAction;
 
-    
-    const fromAccount = await Account.findById(fromAccountId);
+    // 1. Find the target account (this will always exist)
     const toAccount = await Account.findById(toAccountId);
-
-    if (!fromAccount || !toAccount) {
-      return res.status(404).json({ success: false, message: 'Associated accounts not found' });
+    if (!toAccount) {
+      return res.status(404).json({ success: false, message: 'Target account not found' });
     }
 
-    if (fromAccount.balance < amountToTransfer) {
-      return res.status(400).json({ success: false, message: 'Insufficient funds in source account for transfer' });
+    // 2. Safely handle the source account (Internal vs. External Credit)
+    let fromAccount = null;
+    
+    if (fromAccountId !== 'EXTERNAL_CREDIT') {
+      // It is a normal internal transfer, so we find and deduct
+      fromAccount = await Account.findById(fromAccountId);
+      if (!fromAccount) {
+        return res.status(404).json({ success: false, message: 'Source account not found' });
+      }
+      if (fromAccount.balance < amountToTransfer) {
+        return res.status(400).json({ success: false, message: 'Insufficient funds in source account for transfer' });
+      }
+      
+      fromAccount.balance -= amountToTransfer;
+      await fromAccount.save();
     }
 
-    fromAccount.balance -= amountToTransfer;
+    // 3. Add the funds to the target account
     toAccount.balance += amountToTransfer;
-
-    await fromAccount.save();
     await toAccount.save();
 
-    
+    // 4. Mark action as executed
     action.status = 'Executed';
     action.executedAt = new Date();
     await action.save();
@@ -82,7 +88,6 @@ exports.approveAction = async (req, res) => {
 
 exports.simulateCrash = async (req, res) => {
   try {
-    
     const operatingAccount = await Account.findOne({ accountName: { $regex: /operating/i } });
     
     if (!operatingAccount) {

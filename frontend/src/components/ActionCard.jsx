@@ -1,7 +1,12 @@
 import React from 'react';
 
 export default function ActionCard({ action, onApprove }) {
-  const fromAccountName = action.recommendedAction?.fromAccountId?.accountName || 'Reserve Account';
+  const isExternal = action.recommendedAction?.fromAccountId === 'EXTERNAL_CREDIT';
+  
+  const fromAccountName = isExternal 
+    ? '🏦 External Credit Line' 
+    : action.recommendedAction?.fromAccountId?.accountName || 'Reserve Account';
+    
   const toAccountName = action.recommendedAction?.toAccountId?.accountName || 'Operating Account';
   const amount = action.recommendedAction?.amountToTransfer || 0;
   
@@ -36,7 +41,10 @@ export default function ActionCard({ action, onApprove }) {
           <div className="row text-center align-items-center">
             <div className="col">
               <span className="d-block small text-muted text-uppercase mb-1">Transfer From</span>
-              <strong className="fs-5">{fromAccountName}</strong>
+              {/* Added dynamic color: turns red if using external credit */}
+              <strong className={`fs-5 ${isExternal ? 'text-danger' : ''}`}>
+                {fromAccountName}
+              </strong>
             </div>
             <div className="col-auto">
               <span className="fw-bold text-success" style={{ fontSize: '1.2rem' }}>
